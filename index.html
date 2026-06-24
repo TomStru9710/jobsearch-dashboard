@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>JobSearch Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f4f4f4; }
+    header { background: #1f2937; color: white; padding: 16px; }
+    h1 { margin: 0; font-size: 22px; }
+    .container { padding: 20px; }
+    table { width: 100%; border-collapse: collapse; background: white; }
+    th, td { padding: 8px; border-bottom: 1px solid #ddd; }
+    th { background: #111827; color: white; cursor: pointer; }
+    tr:hover { background: #f0f8ff; }
+    .priority-1 { background: #fee2e2; color: #b91c1c; padding: 3px 8px; border-radius: 6px; }
+    .priority-2 { background: #fef3c7; color: #92400e; padding: 3px 8px; border-radius: 6px; }
+    .priority-3 { background: #e0f2fe; color: #075985; padding: 3px 8px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>JobSearch Dashboard – Live Jobs</h1>
+  <div id="lastUpdated"></div>
+</header>
+
+<div class="container">
+  <table id="jobTable">
+    <thead>
+      <tr>
+        <th data-sort="priority">Priorität</th>
+        <th data-sort="position">Position</th>
+        <th data-sort="company">Firma</th>
+        <th data-sort="country">Land</th>
+        <th data-sort="source">Quelle</th>
+        <th data-sort="published">Veröffentlicht</th>
+        <th>Link</th>
+      </tr>
+    </thead>
+    <tbody id="jobBody"></tbody>
+  </table>
+</div>
+
+<script>
+function daysBetween(dateStr) {
+  const today = new Date();
+  const d = new Date(dateStr);
+  return Math.floor((today - d) / (1000 * 60 * 60 * 24));
+}
+
+fetch("jobs.json")
+  .then(r => r.json())
+  .then(data => {
+    const tbody = document.getElementById("jobBody");
+    data.forEach(job => {
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td><span class="priority-${job.priority}">${job.priority}</span></td>
+        <td>${job.position}</td>
+        <td>${job.company}</td>
+        <td>${job.country}</td>
+        <td>${job.source}</td>
+        <td>${job.published}</td>
+        <td><a href="${job.link}" target="_blank">Öffnen</a></td>
+      `;
+
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById("lastUpdated").textContent =
+      "Zuletzt aktualisiert: " + new Date().toLocaleString("de-AT");
+  })
+  .catch(err => {
+    document.getElementById("jobBody").innerHTML =
+      "<tr><td colspan='7'>Fehler: jobs.json nicht gefunden.</td></tr>";
+  });
+</script>
+
+</body>
+</html>
