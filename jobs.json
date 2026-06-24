@@ -2,12 +2,71 @@
   {
     "priority": 1,
     "position": "Director of Product Development",
-    "company": "Anonymous",
-    "country": "US",
+    "company": "Unilever Prestige - UK HUB",
+    "country": "GB",
     "source": "LinkedIn",
-    "link": "https://www.linkedin.com/jobs/view/director-of-product-development-at-anonymous-4428044206",
-    "published": "2026-06-16",
-    "tags": ["Product Development", "Leadership"]
+    "link": "https://uk.linkedin.com/jobs/view/director-of-product-development-at-unilever-prestige-uk-hub-4417787101",
+    "published": "2026-06-12",
+    "tags": ["Product Development", "Director"]
+  },
+  {
+    "priority": 1,
+    "position": "Director of Product Development and Quality",
+    "company": "Tina Lacey Recruitment Ltd",
+    "country": "GB",
+    "source": "Recruit.net",
+    "link": "https://www.recruit.net/job/director-product-development-quality-jobs/16CEF3A0E6A11E92",
+    "published": "2026-06-18",
+    "tags": ["Product Development", "Quality"]
+  },
+  {
+    "priority": 1,
+    "position": "Product Development Director",
+    "company": "Christian Louboutin",
+    "country": "GB",
+    "source": "JobzMall",
+    "link": "https://www.jobzmall.com/christian-louboutin/job/product-development-director-3",
+    "published": "",
+    "tags": ["Product Development", "Director"]
+  },
+  {
+    "priority": 1,
+    "position": "Head of R&D",
+    "company": "Valeo Foods",
+    "country": "GB",
+    "source": "Smart Recruiters Jobs",
+    "link": "https://jobs.smartrecruiters.com/ValeoFoods/744000133563809-head-of-r-d",
+    "published": "2026-06-23",
+    "tags": ["R&D", "Head"]
+  },
+  {
+    "priority": 1,
+    "position": "Product Development Manager",
+    "company": "Pilgrim's Europe",
+    "country": "GB",
+    "source": "LinkedIn",
+    "link": "https://uk.linkedin.com/jobs/view/product-development-manager-product-development-manager-at-pilgrim-s-europe-4391897874",
+    "published": "2026-06-03",
+    "tags": ["Product Development", "Manager"]
+  },
+  {
+    "priority": 1,
+    "position": "R&D Strategy Director for New Product Development",
+    "company": "Get-Recruited (UK) Ltd",
+    "country": "GB",
+    "source": "Talents By StudySmarter",
+    "link": "https://talents.studysmarter.co.uk/companies/get-recruited-uk-ltd/crewe/rd-strategy-director-for-new-product-development-27349290/",
+    "published": "",
+    "tags": ["R&D", "Strategy", "Director"]
+  },
+  {
+    "priority": 1,
+    "position": "Head of Food Product Development",
+    "company": "Green Gourmet Ltd | Certified B Corp™",
+    "country": "GB",
+    "source": "Talents By StudySmarter",
+    "link": "https://talents.studysmarter.co.uk/companies/green-gourmet-ltd-certified-b-corp/stroud/head-of-food-product-development-global-travel-division-uk-hybrid-32167397/",
+    "published": "",
+    "tags": ["Food", "Product Development", "Head"]
   }
 ]
-
