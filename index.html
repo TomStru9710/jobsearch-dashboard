@@ -4,116 +4,114 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mein JobSearch Dashboard</title>
-    <!-- Das stabile Design-Paket von heute Nachmittag -->
-    <link rel="stylesheet" href="https://cloudflare.com">
+    <!-- Das originale Tailwind-Paket von heute Nachmittag -->
+    <script src="https://tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 text-gray-800 min-h-screen p-6">
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen">
 
-    <!-- Header & Filter-Leiste -->
-    <div class="max-w-6xl mx-auto bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-6">
-        <h1 class="text-2xl font-bold text-gray-900">💼 JobSearch Dashboard</h1>
-        <p class="text-sm text-gray-500 mt-1 mb-4">Vollautomatisch gesammelte Stellenangebote</p>
-        
-        <div class="flex flex-col sm:flex-row gap-4 items-center justify-between pt-4 border-t border-gray-100">
-            <input type="text" id="searchInput" placeholder="Jobtitel oder Firma suchen..." 
-                   class="w-full sm:w-80 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-            
-            <label class="flex items-center gap-2 text-sm bg-gray-100 px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-200">
-                <input type="checkbox" id="managementFilter" class="rounded text-blue-600">
-                <span class="ml-2 font-medium">Praktika / Assistenzen ausblenden</span>
-            </label>
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">💼 JobSearch Dashboard</h1>
+                <p class="text-sm text-gray-500 mt-1">Vollautomatisch gesammelte Stellenangebote</p>
+            </div>
+            <!-- Suchfeld -->
+            <div class="w-full md:w-80">
+                <input type="text" id="searchInput" placeholder="Jobtitel oder Firma suchen..." 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+            </div>
         </div>
-    </div>
+    </header>
 
-    <!-- Hauptinhalt: Die saubere Tabelle -->
-    <div class="max-w-6xl mx-auto bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-        <div class="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center text-sm font-medium">
-            <span id="jobCounter" class="text-blue-700">Lade Jobs...</span>
+    <!-- Hauptinhalt -->
+    <main class="max-w-6xl mx-auto px-4 py-8">
+        <!-- Status-Anzeige -->
+        <div id="statusContainer" class="mb-6 flex justify-between items-center text-sm text-gray-600">
+            <span id="jobCounter" class="font-medium bg-blue-50 text-blue-700 px-3 py-1 rounded-full">Lade Jobs...</span>
         </div>
-        
-        <table class="w-full text-left text-sm">
-            <thead class="bg-gray-100 text-xs uppercase text-gray-700 font-bold border-b border-gray-200">
-                <tr>
-                    <th class="px-6 py-3 w-1/2">Jobtitel</th>
-                    <th class="px-6 py-3 w-1/3">Unternehmen</th>
-                    <th class="px-6 py-3 text-right">Aktion</th>
-                </tr>
-            </thead>
-            <tbody id="jobTableBody" class="divide-y divide-gray-200">
-                <!-- Die Jobs werden hier sicher eingefügt -->
-            </tbody>
-        </table>
-    </div>
+
+        <!-- Job-Grid (Die originale Kartenansicht von heute Nachmittag!) -->
+        <div id="jobGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Karten werden per JavaScript generiert -->
+        </div>
+    </main>
 
     <script>
+        // Der private API-Tunnel
         const RAW_JSON_URL = "https://vercel.app";
         let allJobs = [];
-        const filterWords = ["praktikum", "praktikant", "internship", "intern", "trainee", "assistenz", "assistent", "praktika"];
 
         async function fetchJobs() {
+            const grid = document.getElementById("jobGrid");
+            const counter = document.getElementById("jobCounter");
+
             try {
                 const response = await fetch(RAW_JSON_URL);
                 const rawData = await response.json();
                 
-                // EXAKT DER EXTRAKTIONS-CODE VON HEUTE NACHMITTAG, DER BEI DIR FUNKTIONIERT HAT!
-                allJobs = rawData.map(item => item.data || item).filter(job => job && job.title);
-                
-                filterAndRender();
+                // EXAKT der Code, der um 15:46 Uhr deine Daten fehlerfrei geladen hat
+                allJobs = rawData.map(item => item.data || item).filter(job => job.title);
+
+                counter.textContent = `${allJobs.length} Jobs gefunden`;
+                renderJobs(allJobs);
             } catch (error) {
-                console.error(error);
-                document.getElementById("jobTableBody").innerHTML = `<tr><td colspan="3" class="p-6 text-center text-red-500 font-bold">Fehler beim Laden.</td></tr>`;
+                console.error("Fehler beim Laden der Jobs:", error);
+                grid.innerHTML = `
+                    <div class="col-span-full bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-center font-medium">
+                        Fehler beim Laden der Jobdaten. Bitte überprüfen Sie die Verbindung.
+                    </div>`;
+                counter.textContent = "0 Jobs";
             }
         }
 
-        function filterAndRender() {
-            const search = document.getElementById("searchInput").value.toLowerCase();
-            const hideInternships = document.getElementById("managementFilter").checked;
+        function renderJobs(jobsToRender) {
+            const grid = document.getElementById("jobGrid");
+            grid.innerHTML = "";
 
-            const filtered = allJobs.filter(job => {
-                const title = job.title?.toLowerCase() || "";
-                const company = job.company?.toLowerCase() || "";
-                
-                const matchesSearch = title.includes(search) || company.includes(search);
-                const isInternship = filterWords.some(word => title.includes(word));
-                
-                if (hideInternships && isInternship) return false;
-                return matchesSearch;
-            });
-
-            const tbody = document.getElementById("jobTableBody");
-            tbody.innerHTML = "";
-
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-gray-400">Keine Jobs gefunden.</td></tr>`;
+            if (jobsToRender.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center text-gray-500 py-12">Keine passenden Jobs gefunden.</div>`;
                 return;
             }
 
-            filtered.forEach(job => {
-                const tr = document.createElement("tr");
-                tr.className = "hover:bg-gray-50 border-b border-gray-100";
+            jobsToRender.forEach(job => {
+                const card = document.createElement("div");
+                card.className = "bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between";
                 
-                const cleanTitle = String(job.title).replace(/<\/?[^>]+(>|$)/g, "");
-                const cleanCompany = job.company ? String(job.company).replace(/<\/?[^>]+(>|$)/g, "") : "Nicht angegeben";
-                const isInternship = filterWords.some(word => cleanTitle.toLowerCase().includes(word));
+                const cleanTitle = job.title.replace(/<\/?[^>]+(>|$)/g, "");
+                const cleanCompany = job.company ? job.company.replace(/<\/?[^>]+(>|$)/g, "") : "Unbekanntes Unternehmen";
 
-                tr.innerHTML = `
-                    <td class="px-6 py-4">
-                        <span class="${isInternship ? 'text-gray-400 italic line-through' : 'font-semibold text-gray-900'}">${cleanTitle}</span>
-                        ${isInternship ? '<span class="ml-2 text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">Keine Leitung</span>' : ''}
-                    </td>
-                    <td class="px-6 py-4 text-gray-600 font-medium">🏢 ${cleanCompany}</td>
-                    <td class="px-6 py-4 text-right">
-                        <a href="${job.link}" target="_blank" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-3 rounded text-xs shadow-sm transition-colors">Öffnen ↗</a>
-                    </td>
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-start justify-between gap-2">
+                            <h3 class="font-bold text-gray-900 text-lg leading-tight hover:text-blue-600 transition-colors">${cleanTitle}</h3>
+                        </div>
+                        <p class="text-sm font-medium text-gray-600 mt-2 flex items-center gap-1">
+                            🏢 ${cleanCompany}
+                        </p>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-gray-100">
+                        <a href="${job.link}" target="_blank" 
+                           class="w-full block text-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm shadow-sm">
+                            Job ansehen ↗
+                        </a>
+                    </div>
                 `;
-                tbody.appendChild(tr);
+                grid.appendChild(card);
             });
-
-            document.getElementById("jobCounter").textContent = `${filtered.length} von ${allJobs.length} Jobs angezeigt`;
         }
 
-        document.getElementById("searchInput").addEventListener("input", filterAndRender);
-        document.getElementById("managementFilter").addEventListener("change", filterAndRender);
+        document.getElementById("searchInput").addEventListener("input", (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filtered = allJobs.filter(job => {
+                const titleMatch = job.title?.toLowerCase().includes(searchTerm);
+                const companyMatch = job.company?.toLowerCase().includes(searchTerm);
+                return titleMatch || companyMatch;
+            });
+            renderJobs(filtered);
+            document.getElementById("jobCounter").textContent = `${filtered.length} von ${allJobs.length} Jobs angezeigt`;
+        });
+
         fetchJobs();
     </script>
 </body>
