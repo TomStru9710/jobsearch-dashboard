@@ -54,12 +54,26 @@
                 const response = await fetch(RAW_JSON_URL);
                 const rawData = await response.json();
                 
-                // HIER IST DIE KORREKTUR: Wir holen die Daten direkt aus der "data"-Verschachtelung von Make!
-                allJobs = rawData.map(item => item.data || item).filter(job => job && job.title);
+                // FEHLER-SCHUTZ-SCHILD: Wir verarbeiten jeden Job einzeln. 
+                // Wenn ein Job defekt ist, fliegt er raus, ohne die Seite zu zerstören!
+                allJobs = [];
+                if (Array.isArray(rawData)) {
+                    rawData.forEach(item => {
+                        try {
+                            const actualJob = item.data || item;
+                            if (actualJob && actualJob.title && actualJob.link) {
+                                allJobs.push(actualJob);
+                            }
+                        } catch (e) {
+                            console.warn("Ein defekter Job wurde übersprungen:", e);
+                        }
+                    });
+                }
                 
                 filterAndRender();
             } catch (error) {
-                document.getElementById("jobTableBody").innerHTML = `<tr><td colspan="3" class="p-6 text-center text-red-500 font-bold">Fehler beim Verarbeiten der Daten im Dashboard.</td></tr>`;
+                console.error(error);
+                document.getElementById("jobTableBody").innerHTML = `<tr><td colspan="3" class="p-6 text-center text-red-500 font-bold">Fehler beim Auslesen des Daten-Formats. Bitte Make-Szenario nochmals 'Run once' starten.</td></tr>`;
             }
         }
 
@@ -90,8 +104,9 @@
                 const tr = document.createElement("tr");
                 tr.className = "hover:bg-gray-50 border-b border-gray-100";
                 
-                const cleanTitle = job.title.replace(/<\/?[^>]+(>|$)/g, "");
-                const cleanCompany = job.company ? job.company.replace(/<\/?[^>]+(>|$)/g, "") : "Nicht angegeben";
+                // HTML-Tags sicher säubern
+                const cleanTitle = String(job.title).replace(/<\/?[^>]+(>|$)/g, "");
+                const cleanCompany = job.company ? String(job.company).replace(/<\/?[^>]+(>|$)/g, "") : "Nicht angegeben";
                 const isInternship = filterWords.some(word => cleanTitle.toLowerCase().includes(word));
 
                 tr.innerHTML = `
