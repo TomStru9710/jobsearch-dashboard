@@ -1,2 +1,0 @@
-# JobSearch Dashboard
-Initial setup
