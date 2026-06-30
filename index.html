@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mein JobSearch Dashboard</title>
+    <!-- Das stabile Design-Paket von heute Nachmittag -->
     <link rel="stylesheet" href="https://cloudflare.com">
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen p-6">
@@ -54,26 +55,13 @@
                 const response = await fetch(RAW_JSON_URL);
                 const rawData = await response.json();
                 
-                // FEHLER-SCHUTZ-SCHILD: Wir verarbeiten jeden Job einzeln. 
-                // Wenn ein Job defekt ist, fliegt er raus, ohne die Seite zu zerstören!
-                allJobs = [];
-                if (Array.isArray(rawData)) {
-                    rawData.forEach(item => {
-                        try {
-                            const actualJob = item.data || item;
-                            if (actualJob && actualJob.title && actualJob.link) {
-                                allJobs.push(actualJob);
-                            }
-                        } catch (e) {
-                            console.warn("Ein defekter Job wurde übersprungen:", e);
-                        }
-                    });
-                }
+                // EXAKT DER EXTRAKTIONS-CODE VON HEUTE NACHMITTAG, DER BEI DIR FUNKTIONIERT HAT!
+                allJobs = rawData.map(item => item.data || item).filter(job => job && job.title);
                 
                 filterAndRender();
             } catch (error) {
                 console.error(error);
-                document.getElementById("jobTableBody").innerHTML = `<tr><td colspan="3" class="p-6 text-center text-red-500 font-bold">Fehler beim Auslesen des Daten-Formats. Bitte Make-Szenario nochmals 'Run once' starten.</td></tr>`;
+                document.getElementById("jobTableBody").innerHTML = `<tr><td colspan="3" class="p-6 text-center text-red-500 font-bold">Fehler beim Laden.</td></tr>`;
             }
         }
 
@@ -104,7 +92,6 @@
                 const tr = document.createElement("tr");
                 tr.className = "hover:bg-gray-50 border-b border-gray-100";
                 
-                // HTML-Tags sicher säubern
                 const cleanTitle = String(job.title).replace(/<\/?[^>]+(>|$)/g, "");
                 const cleanCompany = job.company ? String(job.company).replace(/<\/?[^>]+(>|$)/g, "") : "Nicht angegeben";
                 const isInternship = filterWords.some(word => cleanTitle.toLowerCase().includes(word));
