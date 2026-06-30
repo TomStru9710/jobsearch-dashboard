@@ -4,54 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mein JobSearch Dashboard</title>
-    <!-- CSS über Standard-Link statt Script-Tag laden, um JS-Blockaden zu verhindern -->
     <link rel="stylesheet" href="https://cloudflare.com">
-    <style>
-        .sticky-header { position: sticky; top: 0; z-index: 50; }
-        .line-through-gray { text-decoration: line-through; color: #9ca3af; font-style: italic; }
-    </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen">
 
-    <!-- Header -->
-    <header class="bg-white shadow border-b border-gray-200 sticky-header">
+    <header class="bg-white shadow border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
                 <h1 class="text-xl font-bold text-gray-900">💼 JobSearch Dashboard</h1>
                 <p class="text-xs text-gray-500 mt-0.5">Vollautomatisch gesammelte Stellenangebote</p>
             </div>
-            <!-- Suchfeld -->
             <div class="w-full sm:w-80">
-                <input type="text" id="searchInput" placeholder="Jobtitel oder Firma durchsuchen..." 
-                       class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                <input type="text" id="searchInput" placeholder="Jobtitel oder Firma durchsuchen..." class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg">
             </div>
         </div>
     </header>
 
-    <!-- Hauptinhalt -->
     <main class="max-w-7xl mx-auto px-4 py-6">
-        <!-- Status-Anzeige & Filter -->
-        <div class="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-sm text-gray-600">
+        <div class="mb-4">
             <span id="jobCounter" class="font-medium bg-blue-50 text-blue-700 px-3 py-1 rounded-full">Lade Jobs...</span>
-            <label class="flex items-center gap-2 cursor-pointer text-xs font-medium bg-gray-100 px-3 py-1 rounded-full hover:bg-gray-200 transition-colors">
-                <input type="checkbox" id="managementFilter" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                <span class="ml-1">Nur Leitungsfunktionen anzeigen (Praktika etc. ausblenden)</span>
-            </label>
         </div>
 
-        <!-- Job-Tabelle Container -->
         <div class="bg-white border border-gray-200 rounded-xl shadow overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full border-collapse text-left text-sm text-gray-500">
                     <thead class="bg-gray-50 text-xs uppercase text-gray-700 font-semibold border-b border-gray-200">
                         <tr>
-                            <th scope="col" class="px-6 py-3.5 w-1/2">Jobtitel</th>
-                            <th scope="col" class="px-6 py-3.5 w-1/3">Unternehmen</th>
-                            <th scope="col" class="px-6 py-3.5 text-right">Aktion</th>
+                            <th class="px-6 py-3.5 w-1/2">Jobtitel</th>
+                            <th class="px-6 py-3.5 w-1/3">Unternehmen</th>
+                            <th class="px-6 py-3.5 text-right">Aktion</th>
                         </tr>
                     </thead>
                     <tbody id="jobTableBody" class="divide-y divide-gray-200 bg-white">
-                        <!-- Zeilen werden per JavaScript generiert -->
+                        <!-- Zeilen werden generiert -->
                     </tbody>
                 </table>
             </div>
@@ -60,102 +45,35 @@
 
     <script>
         const RAW_JSON_URL = "https://vercel.app";
-        let allJobs = [];
-
-        // Begriffe für den Negativ-Filter
-        const nonManagementKeywords = ["praktikum", "praktikant", "internship", "intern", "trainee", "assistenz", "assistent", "praktika"];
 
         async function fetchJobs() {
             const tbody = document.getElementById("jobTableBody");
-            const counter = document.getElementById("jobCounter");
-
             try {
                 const response = await fetch(RAW_JSON_URL);
-                if (!response.ok) throw new Error("Netzwerk-Antwort war nicht OK");
+                
+                if (!response.ok) {
+                    // Wenn die API antwortet, aber einen Fehlercode (wie 500) schickt
+                    const errorText = await response.text();
+                    throw new Error(`API-Server meldet Status ${response.status}: ${errorText}`);
+                }
                 
                 const rawData = await response.json();
-                allJobs = rawData.map(item => item.data || item).filter(job => job.title);
+                const allJobs = rawData.map(item => item.data || item).filter(job => job.title);
 
-                filterAndRenderJobs();
+                tbody.innerHTML = `<tr><td colspan="3" class="px-6 py-4 text-green-600 font-bold">Erfolg! ${allJobs.length} Jobs geladen. Technische Details passen.</td></tr>`;
             } catch (error) {
-                console.error("Fehler beim Laden der Jobs:", error);
+                // Gibt den exakten Grund aus (z.B. ob ein CORS-Netzwerkfehler vorliegt)
+                console.error(error);
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="3" class="px-6 py-8 text-center text-red-600 font-medium bg-red-50">
-                            Fehler beim Laden der Jobdaten. Bitte überprüfen Sie die API-Verbindung.
+                        <td colspan="3" class="px-6 py-8 bg-red-50 text-red-700 p-4 font-mono text-xs">
+                            <p class="font-bold text-sm mb-2">🔴 GENAUER FEHLER DIAGNOSTIZIERT:</p>
+                            <p>${error.message}</p>
+                            <p class="mt-2 text-gray-500">Falls hier 'Failed to fetch' steht, blockiert der Browser die Verbindung (CORS) oder die API stürzt ab.</p>
                         </td>
                     </tr>`;
-                counter.textContent = "0 Jobs";
             }
         }
-
-        function filterAndRenderJobs() {
-            const searchTerm = document.getElementById("searchInput").value.toLowerCase();
-            const onlyManagement = document.getElementById("managementFilter").checked;
-
-            const filtered = allJobs.filter(job => {
-                const titleLower = job.title?.toLowerCase() || "";
-                const companyLower = job.company?.toLowerCase() || "";
-                
-                const matchesSearch = titleLower.includes(searchTerm) || companyLower.includes(searchTerm);
-                
-                let matchesManagement = true;
-                if (onlyManagement) {
-                    matchesManagement = !nonManagementKeywords.some(keyword => titleLower.includes(keyword));
-                }
-
-                return matchesSearch && matchesManagement;
-            });
-
-            renderTable(filtered);
-            document.getElementById("jobCounter").textContent = `${filtered.length} von ${allJobs.length} Jobs angezeigt`;
-        }
-
-        function renderTable(jobsToRender) {
-            const tbody = document.getElementById("jobTableBody");
-            tbody.innerHTML = "";
-
-            if (jobsToRender.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="3" class="px-6 py-12 text-center text-gray-500">
-                            Keine passenden Jobs gefunden.
-                        </td>
-                    </tr>`;
-                return;
-            }
-
-            jobsToRender.forEach(job => {
-                const tr = document.createElement("tr");
-                tr.className = "hover:bg-gray-50 transition-colors";
-                
-                const cleanTitle = job.title.replace(/<\/?[^>]+(>|$)/g, "");
-                const cleanCompany = job.company ? job.company.replace(/<\/?[^>]+(>|$)/g, "") : "Nicht angegeben";
-
-                const isNonManagement = nonManagementKeywords.some(keyword => cleanTitle.toLowerCase().includes(keyword));
-                
-                tr.innerHTML = `
-                    <td class="px-6 py-4">
-                        <span class="${isNonManagement ? 'line-through-gray' : 'font-semibold text-gray-900'}">${cleanTitle}</span>
-                        ${isNonManagement ? '<span class="ml-2 text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-normal">Keine Leitung</span>' : ''}
-                    </td>
-                    <td class="px-6 py-4 text-gray-600 font-medium">
-                        🏢 ${cleanCompany}
-                    </td>
-                    <td class="px-6 py-4 text-right whitespace-nowrap">
-                        <a href="${job.link}" target="_blank" 
-                           class="inline-flex items-center bg-white hover:bg-gray-50 text-gray-700 font-medium py-1.5 px-3 border border-gray-300 rounded-lg transition-colors text-xs shadow-sm">
-                            Öffnen ↗
-                        </a>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        document.getElementById("searchInput").addEventListener("input", filterAndRenderJobs);
-        document.getElementById("managementFilter").addEventListener("change", filterAndRenderJobs);
-
         fetchJobs();
     </script>
 </body>
