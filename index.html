@@ -4,39 +4,43 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mein JobSearch Dashboard</title>
-    <!-- Stabile Tailwind-Version für fehlerfreie Ausführung -->
-    <script src="https://tailwindcss.com"></script>
+    <!-- CSS über Standard-Link statt Script-Tag laden, um JS-Blockaden zu verhindern -->
+    <link rel="stylesheet" href="https://cloudflare.com">
+    <style>
+        .sticky-header { position: sticky; top: 0; z-index: 50; }
+        .line-through-gray { text-decoration: line-through; color: #9ca3af; font-style: italic; }
+    </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans min-h-screen">
+<body class="bg-gray-50 text-gray-800 min-h-screen">
 
     <!-- Header -->
-    <header class="bg-white shadow border-b border-gray-200 sticky top-0 z-50">
+    <header class="bg-white shadow border-b border-gray-200 sticky-header">
         <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h1 class="text-xl font-bold text-gray-900 flex items-center gap-2">💼 JobSearch Dashboard</h1>
+                <h1 class="text-xl font-bold text-gray-900">💼 JobSearch Dashboard</h1>
                 <p class="text-xs text-gray-500 mt-0.5">Vollautomatisch gesammelte Stellenangebote</p>
             </div>
             <!-- Suchfeld -->
             <div class="w-full sm:w-80">
                 <input type="text" id="searchInput" placeholder="Jobtitel oder Firma durchsuchen..." 
-                       class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                       class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
             </div>
         </div>
     </header>
 
-    <!-- Hauptinhalt (Breite erhöht für bessere Lesbarkeit) -->
+    <!-- Hauptinhalt -->
     <main class="max-w-7xl mx-auto px-4 py-6">
         <!-- Status-Anzeige & Filter -->
         <div class="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-sm text-gray-600">
             <span id="jobCounter" class="font-medium bg-blue-50 text-blue-700 px-3 py-1 rounded-full">Lade Jobs...</span>
             <label class="flex items-center gap-2 cursor-pointer text-xs font-medium bg-gray-100 px-3 py-1 rounded-full hover:bg-gray-200 transition-colors">
                 <input type="checkbox" id="managementFilter" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                <span>Nur Leitungsfunktionen anzeigen (Praktika etc. ausblenden)</span>
+                <span class="ml-1">Nur Leitungsfunktionen anzeigen (Praktika etc. ausblenden)</span>
             </label>
         </div>
 
         <!-- Job-Tabelle Container -->
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        <div class="bg-white border border-gray-200 rounded-xl shadow overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full border-collapse text-left text-sm text-gray-500">
                     <thead class="bg-gray-50 text-xs uppercase text-gray-700 font-semibold border-b border-gray-200">
@@ -59,7 +63,7 @@
         let allJobs = [];
 
         // Begriffe für den Negativ-Filter
-        const nonManagementKeywords = ["praktikum", "praktikant", "internship", "intern", "trainee", "assistenz", "assistent"];
+        const nonManagementKeywords = ["praktikum", "praktikant", "internship", "intern", "trainee", "assistenz", "assistent", "praktika"];
 
         async function fetchJobs() {
             const tbody = document.getElementById("jobTableBody");
@@ -129,19 +133,18 @@
                 const cleanCompany = job.company ? job.company.replace(/<\/?[^>]+(>|$)/g, "") : "Nicht angegeben";
 
                 const isNonManagement = nonManagementKeywords.some(keyword => cleanTitle.toLowerCase().includes(keyword));
-                const titleStyle = isNonManagement ? "text-gray-400 italic line-through decoration-gray-300" : "font-semibold text-gray-900";
-
+                
                 tr.innerHTML = `
                     <td class="px-6 py-4">
-                        <span class="${titleStyle}">${cleanTitle}</span>
-                        ${isNonManagement ? '<span class="ml-2 text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-normal not-italic no-underline">Keine Leitung</span>' : ''}
+                        <span class="${isNonManagement ? 'line-through-gray' : 'font-semibold text-gray-900'}">${cleanTitle}</span>
+                        ${isNonManagement ? '<span class="ml-2 text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-normal">Keine Leitung</span>' : ''}
                     </td>
                     <td class="px-6 py-4 text-gray-600 font-medium">
                         🏢 ${cleanCompany}
                     </td>
                     <td class="px-6 py-4 text-right whitespace-nowrap">
                         <a href="${job.link}" target="_blank" 
-                           class="inline-flex items-center gap-1 bg-white hover:bg-gray-50 text-gray-700 font-medium py-1.5 px-3 border border-gray-300 rounded-lg transition-colors text-xs shadow-sm">
+                           class="inline-flex items-center bg-white hover:bg-gray-50 text-gray-700 font-medium py-1.5 px-3 border border-gray-300 rounded-lg transition-colors text-xs shadow-sm">
                             Öffnen ↗
                         </a>
                     </td>
