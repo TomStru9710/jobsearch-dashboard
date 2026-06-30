@@ -10,43 +10,59 @@
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen">
 
     <!-- Header -->
-    <header class="bg-white shadow-xs border-b border-gray-200">
-        <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <header class="bg-white shadow-xs border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900">💼 JobSearch Dashboard</h1>
-                <p class="text-sm text-gray-500 mt-1">Vollautomatisch gesammelte Stellenangebote</p>
+                <h1 class="text-xl font-bold text-gray-900 flex items-center gap-2">💼 JobSearch Dashboard</h1>
+                <p class="text-xs text-gray-500 mt-0.5">Vollautomatisch gesammelte Stellenangebote</p>
             </div>
             <!-- Suchfeld -->
-            <div class="w-full md:w-80">
-                <input type="text" id="searchInput" placeholder="Jobtitel oder Firma suchen..." 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+            <div class="w-full sm:w-80">
+                <input type="text" id="searchInput" placeholder="Jobtitel oder Firma durchsuchen..." 
+                       class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg shadow-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
             </div>
         </div>
     </header>
 
     <!-- Hauptinhalt -->
-    <main class="max-w-6xl mx-auto px-4 py-8">
-        <!-- Status-Anzeige -->
-        <div id="statusContainer" class="mb-6 flex justify-between items-center text-sm text-gray-600">
+    <main class="max-w-6xl mx-auto px-4 py-6">
+        <!-- Status-Anzeige & Filter -->
+        <div class="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-sm text-gray-600">
             <span id="jobCounter" class="font-medium bg-blue-50 text-blue-700 px-3 py-1 rounded-full">Lade Jobs...</span>
+            <label class="flex items-center gap-2 cursor-pointer text-xs font-medium bg-gray-100 px-3 py-1 rounded-full hover:bg-gray-200 transition-colors">
+                <input type="checkbox" id="managementFilter" class="rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500">
+                <span>Nur Leitungsfunktionen anzeigen (Praktika etc. ausblenden)</span>
+            </label>
         </div>
 
-        <!-- Job-Grid -->
-        <div id="jobGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Karten werden per JavaScript generiert -->
+        <!-- Job-Tabelle Container -->
+        <div class="bg-white border border-gray-200 rounded-xl shadow-xs overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full border-collapse text-left text-sm text-gray-500">
+                    <thead class="bg-gray-50 text-xs uppercase text-gray-700 font-semibold border-b border-gray-200">
+                        <tr>
+                            <th scope="col" class="px-6 py-3.5 w-1/2">Jobtitel</th>
+                            <th scope="col" class="px-6 py-3.5 w-1/3">Unternehmen</th>
+                            <th scope="col" class="px-6 py-3.5 text-right">Aktion</th>
+                        </tr>
+                    </thead>
+                    <tbody id="jobTableBody" class="divide-y divide-gray-200 bg-white">
+                        <!-- Zeilen werden per JavaScript generiert -->
+                    </tbody>
+                </table>
+            </div>
         </div>
     </main>
 
-    <!-- JavaScript Logik -->
     <script>
-        // !!! WICHTIG: Ersetzen Sie diese URL mit Ihrer eigenen RAW-GitHub URL !!!
-        const RAW_JSON_URL = "https://job-search-updater.vercel.app/api/jobs";
-
+        const RAW_JSON_URL = "https://vercel.app";
         let allJobs = [];
 
-        // Daten von GitHub abrufen
+        // Begriffe, die auf KEINE Leitungsfunktion hinweisen (z.B. Praktika, Assistenz)
+        const nonManagementKeywords = ["praktikum", "praktikant", "internship", "intern", "trainee", "assistenz", "assistent"];
+
         async function fetchJobs() {
-            const grid = document.getElementById("jobGrid");
+            const tbody = document.getElementById("jobTableBody");
             const counter = document.getElementById("jobCounter");
 
             try {
@@ -54,71 +70,92 @@
                 if (!response.ok) throw new Error("Netzwerk-Antwort war nicht OK");
                 
                 const rawData = await response.json();
-                
-                // Da Make die Daten verschachtelt speichert, extrahieren wir die echten Jobs:
                 allJobs = rawData.map(item => item.data || item).filter(job => job.title);
 
-                counter.textContent = `${allJobs.length} Jobs gefunden`;
-                renderJobs(allJobs);
+                filterAndRenderJobs();
             } catch (error) {
                 console.error("Fehler beim Laden der Jobs:", error);
-                grid.innerHTML = `
-                    <div class="col-span-full bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-center font-medium">
-                        Fehler beim Laden der Jobdaten. Bitte stellen Sie sicher, dass Ihr GitHub-Repository öffentlich ist oder die URL stimmt.
-                    </div>`;
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="px-6 py-8 text-center text-red-600 font-medium bg-red-50">
+                            Fehler beim Laden der Jobdaten. Bitte überprüfen Sie die API-Verbindung.
+                        </td>
+                    </tr>`;
                 counter.textContent = "0 Jobs";
             }
         }
 
-        // Jobs auf der Seite anzeigen
-        function renderJobs(jobsToRender) {
-            const grid = document.getElementById("jobGrid");
-            grid.innerHTML = "";
+        function filterAndRenderJobs() {
+            const searchTerm = document.getElementById("searchInput").value.toLowerCase();
+            const onlyManagement = document.getElementById("managementFilter").checked;
+
+            const filtered = allJobs.filter(job => {
+                const titleLower = job.title?.toLowerCase() || "";
+                const companyLower = job.company?.toLowerCase() || "";
+                
+                // 1. Suchbegriff prüfen
+                const matchesSearch = titleLower.includes(searchTerm) || companyLower.includes(searchTerm);
+                
+                // 2. Leitungsfunktion prüfen (Falls Checkbox aktiv, darf der Titel KEINE der Non-Management Keywords enthalten)
+                let matchesManagement = true;
+                if (onlyManagement) {
+                    matchesManagement = !nonManagementKeywords.some(keyword => titleLower.includes(keyword));
+                }
+
+                return matchesSearch && matchesManagement;
+            });
+
+            renderTable(filtered);
+            document.getElementById("jobCounter").textContent = `${filtered.length} von ${allJobs.length} Jobs angezeigt`;
+        }
+
+        function renderTable(jobsToRender) {
+            const tbody = document.getElementById("jobTableBody");
+            tbody.innerHTML = "";
 
             if (jobsToRender.length === 0) {
-                grid.innerHTML = `<div class="col-span-full text-center text-gray-500 py-12">Keine passenden Jobs gefunden.</div>`;
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="px-6 py-12 text-center text-gray-500">
+                            Keine passenden Jobs gefunden.
+                        </td>
+                    </tr>`;
                 return;
             }
 
             jobsToRender.forEach(job => {
-                const card = document.createElement("div");
-                card.className = "bg-white p-6 rounded-xl border border-gray-200 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between";
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-gray-50 transition-colors";
                 
-                // Bereinigung falls HTML-Tags im Titel stecken
                 const cleanTitle = job.title.replace(/<\/?[^>]+(>|$)/g, "");
-                const cleanCompany = job.company ? job.company.replace(/<\/?[^>]+(>|$)/g, "") : "Unbekanntes Unternehmen";
+                const cleanCompany = job.company ? job.company.replace(/<\/?[^>]+(>|$)/g, "") : "Nicht angegeben";
 
-                card.innerHTML = `
-                    <div>
-                        <div class="flex items-start justify-between gap-2">
-                            <h3 class="font-bold text-gray-900 text-lg leading-tight hover:text-blue-600 transition-colors">${cleanTitle}</h3>
-                        </div>
-                        <p class="text-sm font-medium text-gray-600 mt-2 flex items-center gap-1">
-                            🏢 ${cleanCompany}
-                        </p>
-                    </div>
-                    <div class="mt-6 pt-4 border-t border-gray-100">
+                // Prüfen, ob dieser spezifische Job ein Praktikum o.ä. ist, um ihn dezent zu markieren
+                const isNonManagement = nonManagementKeywords.some(keyword => cleanTitle.toLowerCase().includes(keyword));
+                const titleStyle = isNonManagement ? "text-gray-400 italic line-through decoration-gray-300" : "font-semibold text-gray-900";
+
+                tr.innerHTML = `
+                    <td class="px-6 py-4">
+                        <span class="${titleStyle}">${cleanTitle}</span>
+                        ${isNonManagement ? '<span class="ml-2 text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-normal not-italic no-underline">Keine Leitung</span>' : ''}
+                    </td>
+                    <td class="px-6 py-4 text-gray-600 font-medium">
+                        🏢 ${cleanCompany}
+                    </td>
+                    <td class="px-6 py-4 text-right whitespace-nowrap">
                         <a href="${job.link}" target="_blank" 
-                           class="w-full block text-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm shadow-xs">
-                            Job ansehen ↗
+                           class="inline-flex items-center gap-1 bg-white hover:bg-gray-50 text-gray-700 font-medium py-1.5 px-3 border border-gray-300 rounded-lg transition-colors text-xs shadow-xs">
+                            Öffnen ↗
                         </a>
-                    </div>
+                    </td>
                 `;
-                grid.appendChild(card);
+                tbody.appendChild(tr);
             });
         }
 
-        // Suchfunktion aktivieren
-        document.getElementById("searchInput").addEventListener("input", (e) => {
-            const searchTerm = e.target.value.toLowerCase();
-            const filtered = allJobs.filter(job => {
-                const titleMatch = job.title?.toLowerCase().includes(searchTerm);
-                const companyMatch = job.company?.toLowerCase().includes(searchTerm);
-                return titleMatch || companyMatch;
-            });
-            renderJobs(filtered);
-            document.getElementById("jobCounter").textContent = `${filtered.length} von ${allJobs.length} Jobs angezeigt`;
-        });
+        // Event Listener für Suche und Filter-Checkbox
+        document.getElementById("searchInput").addEventListener("input", filterAndRenderJobs);
+        document.getElementById("managementFilter").addEventListener("change", filterAndRenderJobs);
 
         // Starten
         fetchJobs();
