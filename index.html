@@ -4,12 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mein JobSearch Dashboard</title>
-    <!-- Wir nutzen die stabile CSS-Version, die das Laden von JavaScript NIEMALS blockiert -->
     <link rel="stylesheet" href="https://cloudflare.com">
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen p-6">
 
-    <!-- Header & Filter-Leiste -->
+    <!-- Header & Filter -->
     <div class="max-w-6xl mx-auto bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-6">
         <h1 class="text-2xl font-bold text-gray-900">💼 JobSearch Dashboard</h1>
         <p class="text-sm text-gray-500 mt-1 mb-4">Vollautomatisch gesammelte Stellenangebote</p>
@@ -25,10 +24,10 @@
         </div>
     </div>
 
-    <!-- Hauptinhalt: Die saubere Tabelle -->
+    <!-- Tabelle -->
     <div class="max-w-6xl mx-auto bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
         <div class="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center text-sm font-medium">
-            <span id="jobCounter" class="text-blue-700">Lade Jobs...</span>
+            <span id="jobCounter" class="text-blue-700">Lade Jobs aus geschütztem Speicher...</span>
         </div>
         
         <table class="w-full text-left text-sm">
@@ -40,29 +39,35 @@
                 </tr>
             </thead>
             <tbody id="jobTableBody" class="divide-y divide-gray-200">
-                <!-- Die Jobs werden hier sicher eingefügt -->
+                <!-- Spalten landen hier -->
             </tbody>
         </table>
     </div>
 
     <script>
-        // DEIN FUNKTIONIERENDER, PRIVATER API-TUNNEL VON VORHIN!
-        const RAW_JSON_URL = "https://vercel.app";
+        // Wir nutzen das Vercel-eigene API-System aus dem Dashboard-Projekt
+        const RAW_JSON_URL = "/api/jobs";
         let allJobs = [];
-        
-        // Wörter, die wir herausfiltern oder markieren wollen
         const filterWords = ["praktikum", "praktikant", "internship", "intern", "trainee", "assistenz", "assistent", "praktika"];
 
         async function fetchJobs() {
             try {
+                // Wir holen die Daten relativ aus dem eigenen Projekt, das umgeht den Vercel-Netzwerk-Fehler
                 const response = await fetch(RAW_JSON_URL);
                 const rawData = await response.json();
                 
-                // Extrahiert die Daten sicher aus der privaten Datei
                 allJobs = rawData.map(item => item.data || item).filter(job => job.title);
                 filterAndRender();
             } catch (error) {
-                document.getElementById("jobTableBody").innerHTML = `<tr><td colspan="3" class="p-6 text-center text-red-500 font-bold">Verbindung zum privaten API-Server wird aufgebaut... Bitte lade die Seite in wenigen Sekunden neu.</td></tr>`;
+                // Falls Vercel komplett blockiert, nutzen wir deinen allerersten, funktionierenden GitHub-Direktweg als Fallback
+                try {
+                    const fallbackResponse = await fetch("https://githubusercontent.com");
+                    const fallbackData = await fallbackResponse.json();
+                    allJobs = fallbackData.map(item => item.data || item).filter(job => job.title);
+                    filterAndRender();
+                } catch (e) {
+                    document.getElementById("jobTableBody").innerHTML = `<tr><td colspan="3" class="p-6 text-center text-red-500 font-bold">Verbindung wird neu kalibriert. Bitte lade die Seite in 10 Sekunden neu.</td></tr>`;
+                }
             }
         }
 
@@ -93,7 +98,6 @@
                 const tr = document.createElement("tr");
                 tr.className = "hover:bg-gray-50 border-b border-gray-100";
                 
-                // Bereinigung von HTML-Resten aus Jobportalen
                 const cleanTitle = job.title.replace(/<\/?[^>]+(>|$)/g, "");
                 const cleanCompany = job.company ? job.company.replace(/<\/?[^>]+(>|$)/g, "") : "Nicht angegeben";
                 const isInternship = filterWords.some(word => cleanTitle.toLowerCase().includes(word));
@@ -105,7 +109,7 @@
                     </td>
                     <td class="px-6 py-4 text-gray-600 font-medium">🏢 ${cleanCompany}</td>
                     <td class="px-6 py-4 text-right">
-                        <a href="${job.link}" target="_blank" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-3 rounded text-xs shadow-sm transition-colors">Öffnen ↗</a>
+                        <a href="${job.link}" target="_blank" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-3 rounded text-xs shadow-sm">Öffnen ↗</a>
                     </td>
                 `;
                 tbody.appendChild(tr);
