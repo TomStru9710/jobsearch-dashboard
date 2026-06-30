@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mein JobSearch Dashboard</title>
+    <!-- Normales, stabiles Design-Paket -->
     <link rel="stylesheet" href="https://cloudflare.com">
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen p-6">
 
-    <!-- Header & Filter -->
+    <!-- Header & Filter-Leiste -->
     <div class="max-w-6xl mx-auto bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-6">
         <h1 class="text-2xl font-bold text-gray-900">💼 JobSearch Dashboard</h1>
         <p class="text-sm text-gray-500 mt-1 mb-4">Vollautomatisch gesammelte Stellenangebote</p>
@@ -24,7 +25,7 @@
         </div>
     </div>
 
-    <!-- Tabelle -->
+    <!-- Hauptinhalt: Die saubere Tabelle -->
     <div class="max-w-6xl mx-auto bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
         <div class="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center text-sm font-medium">
             <span id="jobCounter" class="text-blue-700">Lade Jobs...</span>
@@ -39,24 +40,29 @@
                 </tr>
             </thead>
             <tbody id="jobTableBody" class="divide-y divide-gray-200">
-                <!-- Jobs landen hier -->
+                <!-- Die Jobs werden hier sicher eingefügt -->
             </tbody>
         </table>
     </div>
 
     <script>
+        // Deine funktionierende Backend-URL mit korrekter Pfad-Endung
         const RAW_JSON_URL = "https://vercel.app";
         let allJobs = [];
+        
+        // Wörter für den Negativ-Filter (Praktika, Assistenzen etc.)
         const filterWords = ["praktikum", "praktikant", "internship", "intern", "trainee", "assistenz", "assistent", "praktika"];
 
         async function fetchJobs() {
             try {
                 const response = await fetch(RAW_JSON_URL);
                 const rawData = await response.json();
-                allJobs = rawData.map(item => item.data || item).filter(job => job.title);
+                
+                // Korrigierte Zeile: Filtert die Jobs direkt ohne Absturz
+                allJobs = rawData.filter(job => job.title);
                 filterAndRender();
             } catch (error) {
-                document.getElementById("jobTableBody").innerHTML = `<tr><td colspan="3" class="p-6 text-center text-red-500 font-bold">Verbindung zum Server wird aufgebaut... Bitte lade gleich neu.</td></tr>`;
+                document.getElementById("jobTableBody").innerHTML = `<tr><td colspan="3" class="p-6 text-center text-red-500 font-bold">Fehler beim Laden der Daten vom API-Server.</td></tr>`;
             }
         }
 
@@ -85,8 +91,9 @@
 
             filtered.forEach(job => {
                 const tr = document.createElement("tr");
-                tr.className = "hover:bg-gray-50";
+                tr.className = "hover:bg-gray-50 border-b border-gray-100";
                 
+                // HTML-Tags aus Jobtiteln entfernen
                 const cleanTitle = job.title.replace(/<\/?[^>]+(>|$)/g, "");
                 const cleanCompany = job.company ? job.company.replace(/<\/?[^>]+(>|$)/g, "") : "Nicht angegeben";
                 const isInternship = filterWords.some(word => cleanTitle.toLowerCase().includes(word));
@@ -98,7 +105,7 @@
                     </td>
                     <td class="px-6 py-4 text-gray-600 font-medium">🏢 ${cleanCompany}</td>
                     <td class="px-6 py-4 text-right">
-                        <a href="${job.link}" target="_blank" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-1 px-3 rounded text-xs">Öffnen ↗</a>
+                        <a href="${job.link}" target="_blank" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-3 rounded text-xs shadow-sm transition-colors">Öffnen ↗</a>
                     </td>
                 `;
                 tbody.appendChild(tr);
