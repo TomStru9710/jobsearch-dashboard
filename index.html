@@ -34,8 +34,8 @@
     </main>
 
     <script>
-        // Relativer Pfad: Verhindert jede Form von CORS-Sperren im Browser!
-        const RAW_JSON_URL = "/api/jobs";
+        // DIE ADRESSE, DIE BEI IHNEN DIE ROHDATEN ANZEIGT!
+        const RAW_JSON_URL = "https://vercel.app";
         let allJobs = [];
 
         async function fetchJobs() {
@@ -46,15 +46,8 @@
                 const response = await fetch(RAW_JSON_URL);
                 const rawData = await response.json();
                 
-                allJobs = [];
-                if (Array.isArray(rawData)) {
-                    rawData.forEach(item => {
-                        const job = item.data || item;
-                        if (job && job.title) {
-                            allJobs.push(job);
-                        }
-                    });
-                }
+                // Extrahiert die Einträge exakt so, wie sie in Ihrer funktionierenden Rohdaten-Ansicht stehen
+                allJobs = rawData.map(item => item.data || item).filter(job => job && job.title);
 
                 counter.textContent = `${allJobs.length} Jobs gefunden`;
                 renderJobs(allJobs);
@@ -78,8 +71,8 @@
                 const card = document.createElement("div");
                 card.className = "bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md flex flex-col justify-between";
                 
-                const titleText = job.title ? String(job.title).replace(/<\/?[^>]+(>|$)/g, "") : "Kein Titel";
-                const companyText = job.company ? String(job.company).replace(/<\/?[^>]+(>|$)/g, "") : "Unbekanntes Unternehmen";
+                const titleText = job.title || "Kein Titel";
+                const companyText = job.company || "Unbekanntes Unternehmen";
 
                 card.innerHTML = `
                     <div>
