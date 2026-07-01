@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mein JobSearch Dashboard</title>
+    <!-- Das originale, funktionierende Design von gestern Nachmittag -->
     <script src="https://tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen">
@@ -32,13 +33,13 @@
 
         <!-- Job-Grid -->
         <div id="jobGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Karten werden generiert -->
+            <!-- Karten werden hier generiert -->
         </div>
     </main>
 
     <script>
-        // DER INTERNE PFAD, DER JEDE CORS-BLOCKADE UNMÖGLICH MACHT!
-        const RAW_JSON_URL = "/api/jobs";
+        // IHRE NACHWEISLICH FUNKTIONIERENDE URL VOM UPDATER!
+        const RAW_JSON_URL = "https://vercel.app";
         let allJobs = [];
 
         async function fetchJobs() {
@@ -49,7 +50,7 @@
                 const response = await fetch(RAW_JSON_URL);
                 const rawData = await response.json();
                 
-                // Flexibler Daten-Extraktor für das Make-Format
+                // Der fehlerresistente Entschlüsseler, der Make-Daten sofort versteht
                 allJobs = rawData.map(item => {
                     let job = item.data || item;
                     if (typeof job === 'string') {
