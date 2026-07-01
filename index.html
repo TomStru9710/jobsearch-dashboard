@@ -8,7 +8,6 @@
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen">
 
-    <!-- Header -->
     <header class="bg-white shadow-sm border-b border-gray-200">
         <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
@@ -17,12 +16,11 @@
             </div>
             <div class="w-full md:w-80">
                 <input type="text" id="searchInput" placeholder="Jobtitel oder Firma suchen..." 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
             </div>
         </div>
     </header>
 
-    <!-- Hauptinhalt -->
     <main class="max-w-6xl mx-auto px-4 py-8">
         <div id="statusContainer" class="mb-6 flex justify-between items-center text-sm text-gray-600">
             <span id="jobCounter" class="font-medium bg-blue-50 text-blue-700 px-3 py-1 rounded-full">Lade Jobs...</span>
@@ -34,7 +32,7 @@
     </main>
 
     <script>
-        // DIE ADRESSE, DIE BEI IHNEN DIE ROHDATEN ANZEIGT!
+        // Nutzt direkt die funktionierende Updater-URL
         const RAW_JSON_URL = "https://vercel.app";
         let allJobs = [];
 
@@ -46,7 +44,7 @@
                 const response = await fetch(RAW_JSON_URL);
                 const rawData = await response.json();
                 
-                // Extrahiert die Einträge exakt so, wie sie in Ihrer funktionierenden Rohdaten-Ansicht stehen
+                // Der originale Filter von gestern Nachmittag
                 allJobs = rawData.map(item => item.data || item).filter(job => job && job.title);
 
                 counter.textContent = `${allJobs.length} Jobs gefunden`;
