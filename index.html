@@ -4,73 +4,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mein JobSearch Dashboard</title>
-    <!-- Tailwind CSS für die Optik -->
-    <script src="https://jsdelivr.net"></script>
+    <script src="https://tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen">
 
     <!-- Header -->
-    <header class="bg-white shadow-xs border-b border-gray-200">
+    <header class="bg-white shadow-sm border-b border-gray-200">
         <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">💼 JobSearch Dashboard</h1>
                 <p class="text-sm text-gray-500 mt-1">Vollautomatisch gesammelte Stellenangebote</p>
             </div>
-            <!-- Suchfeld -->
             <div class="w-full md:w-80">
                 <input type="text" id="searchInput" placeholder="Jobtitel oder Firma suchen..." 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-xs focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
         </div>
     </header>
 
     <!-- Hauptinhalt -->
     <main class="max-w-6xl mx-auto px-4 py-8">
-        <!-- Status-Anzeige -->
         <div id="statusContainer" class="mb-6 flex justify-between items-center text-sm text-gray-600">
             <span id="jobCounter" class="font-medium bg-blue-50 text-blue-700 px-3 py-1 rounded-full">Lade Jobs...</span>
         </div>
 
-        <!-- Job-Grid -->
         <div id="jobGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Karten werden per JavaScript generiert -->
+            <!-- Karten -->
         </div>
     </main>
 
-    <!-- JavaScript Logik -->
     <script>
-        // !!! WICHTIG: Ersetzen Sie diese URL mit Ihrer eigenen RAW-GitHub URL !!!
-        const RAW_JSON_URL = "https://vercel.app";
-
+        // Der krisensichere interne Tunnel deines Dashboard-Projekts
+        const RAW_JSON_URL = "/api/jobs";
         let allJobs = [];
 
-        // Daten von GitHub abrufen
         async function fetchJobs() {
             const grid = document.getElementById("jobGrid");
             const counter = document.getElementById("jobCounter");
 
             try {
                 const response = await fetch(RAW_JSON_URL);
-                if (!response.ok) throw new Error("Netzwerk-Antwort war nicht OK");
-                
                 const rawData = await response.json();
                 
-                // Da Make die Daten verschachtelt speichert, extrahieren wir die echten Jobs:
-                allJobs = rawData.map(item => item.data || item).filter(job => job.title);
+                // Der originale Daten-Extraktor von gestern Nachmittag
+                allJobs = rawData.map(item => item.data || item).filter(job => job && job.title);
 
                 counter.textContent = `${allJobs.length} Jobs gefunden`;
                 renderJobs(allJobs);
             } catch (error) {
-                console.error("Fehler beim Laden der Jobs:", error);
-                grid.innerHTML = `
-                    <div class="col-span-full bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-center font-medium">
-                        Fehler beim Laden der Jobdaten. Bitte stellen Sie sicher, dass Ihr GitHub-Repository öffentlich ist oder die URL stimmt.
-                    </div>`;
+                console.error("Fehler beim Laden:", error);
+                grid.innerHTML = `<div class="col-span-full bg-red-50 text-red-700 px-4 py-3 rounded-lg text-center font-medium">Fehler beim Laden der Jobdaten. Bitte überprüfen Sie die Verbindung.</div>`;
                 counter.textContent = "0 Jobs";
             }
         }
 
-        // Jobs auf der Seite anzeigen
         function renderJobs(jobsToRender) {
             const grid = document.getElementById("jobGrid");
             grid.innerHTML = "";
@@ -82,33 +69,24 @@
 
             jobsToRender.forEach(job => {
                 const card = document.createElement("div");
-                card.className = "bg-white p-6 rounded-xl border border-gray-200 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between";
+                card.className = "bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md flex flex-col justify-between";
                 
-                // Bereinigung falls HTML-Tags im Titel stecken
-                const cleanTitle = job.title.replace(/<\/?[^>]+(>|$)/g, "");
-                const cleanCompany = job.company ? job.company.replace(/<\/?[^>]+(>|$)/g, "") : "Unbekanntes Unternehmen";
+                const titleText = job.title || "Kein Titel";
+                const companyText = job.company || "Unbekanntes Unternehmen";
 
                 card.innerHTML = `
                     <div>
-                        <div class="flex items-start justify-between gap-2">
-                            <h3 class="font-bold text-gray-900 text-lg leading-tight hover:text-blue-600 transition-colors">${cleanTitle}</h3>
-                        </div>
-                        <p class="text-sm font-medium text-gray-600 mt-2 flex items-center gap-1">
-                            🏢 ${cleanCompany}
-                        </p>
+                        <h3 class="font-bold text-gray-900 text-lg leading-tight">${titleText}</h3>
+                        <p class="text-sm font-medium text-gray-600 mt-2">🏢 ${companyText}</p>
                     </div>
                     <div class="mt-6 pt-4 border-t border-gray-100">
-                        <a href="${job.link}" target="_blank" 
-                           class="w-full block text-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm shadow-xs">
-                            Job ansehen ↗
-                        </a>
+                        <a href="${job.link}" target="_blank" class="w-full block text-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg text-sm shadow-sm">Job ansehen ↗</a>
                     </div>
                 `;
                 grid.appendChild(card);
             });
         }
 
-        // Suchfunktion aktivieren
         document.getElementById("searchInput").addEventListener("input", (e) => {
             const searchTerm = e.target.value.toLowerCase();
             const filtered = allJobs.filter(job => {
@@ -120,7 +98,6 @@
             document.getElementById("jobCounter").textContent = `${filtered.length} von ${allJobs.length} Jobs angezeigt`;
         });
 
-        // Starten
         fetchJobs();
     </script>
 </body>
