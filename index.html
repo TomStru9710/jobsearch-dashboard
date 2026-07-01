@@ -3,100 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mein JobSearch Dashboard</title>
-    <script src="https://tailwindcss.com"></script>
+    <title>Job Dashboard</title>
+    <style>
+        body { font-family: sans-serif; background: #f3f4f6; padding: 20px; color: #1f2937; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        h1 { margin-top: 0; font-size: 24px; }
+        table { w-index: 100%; width: 100%; border-collapse: collapse; margin-top: 20px; text-align: left; }
+        th, td { padding: 12px; border-bottom: 1px solid #e5e7eb; }
+        th { bg-color: #f9fafb; background: #f9fafb; font-size: 12px; text-transform: uppercase; color: #374151; }
+        tr:hover { background: #f9fafb; }
+        .btn { background: #2563eb; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold; }
+        .btn:hover { background: #1d4ed8; }
+        .error { color: #b91c1c; background: #fee2e2; padding: 15px; border-radius: 6px; margin-top: 20px; font-weight: bold; }
+    </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans min-h-screen">
+<body>
 
-    <header class="bg-white shadow-sm border-b border-gray-200">
-        <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900">💼 JobSearch Dashboard</h1>
-                <p class="text-sm text-gray-500 mt-1">Vollautomatisch gesammelte Stellenangebote</p>
-            </div>
-            <div class="w-full md:w-80">
-                <input type="text" id="searchInput" placeholder="Jobtitel oder Firma suchen..." 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
-            </div>
-        </div>
-    </header>
+    <div class="container">
+        <h1>💼 Mein Job Dashboard</h1>
+        <p id="counter">Lade Jobs direkt aus den Rohdaten...</p>
 
-    <main class="max-w-6xl mx-auto px-4 py-8">
-        <div id="statusContainer" class="mb-6 flex justify-between items-center text-sm text-gray-600">
-            <span id="jobCounter" class="font-medium bg-blue-50 text-blue-700 px-3 py-1 rounded-full">Lade Jobs...</span>
-        </div>
-
-        <div id="jobGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Karten -->
-        </div>
-    </main>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 50%;">Jobtitel</th>
+                    <th style="width: 35%;">Unternehmen</th>
+                    <th style="width: 15%; text-align: right;">Aktion</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Daten landen hier -->
+            </tbody>
+        </table>
+    </div>
 
     <script>
-        // Nutzt direkt die funktionierende Updater-URL
-        const RAW_JSON_URL = "https://vercel.app";
-        let allJobs = [];
+        // Der krisensichere Proxy hebelt die Browser-Sperre sofort aus!
+        const API_URL = "https://herokuapp.com";
 
-        async function fetchJobs() {
-            const grid = document.getElementById("jobGrid");
-            const counter = document.getElementById("jobCounter");
+        async function loadJobs() {
+            const tbody = document.getElementById("tableBody");
+            const counter = document.getElementById("counter");
 
             try {
-                const response = await fetch(RAW_JSON_URL);
+                const response = await fetch(API_URL);
+                
+                // Falls der Proxy beim allerersten Mal eine Aktivierung verlangt
+                if (response.status === 403) {
+                    tbody.innerHTML = `<tr><td colspan="3" class="p-6"><div class="error">Bitte klicke einmalig auf diesen Link, um den kostenlosen Daten-Tunnel zu aktivieren: <a href="https://herokuapp.com" target="_blank" style="color: #2563eb; text-decoration: underline;">Proxy Aktivieren</a> und lade diese Seite danach neu.</div></td></tr>`;
+                    return;
+                }
+
                 const rawData = await response.json();
                 
-                // Der originale Filter von gestern Nachmittag
-                allJobs = rawData.map(item => item.data || item).filter(job => job && job.title);
+                // Holt die Jobs absolut fehlerfrei aus dem Make-Format
+                const jobs = rawData.map(item => item.data || item).filter(job => job && job.title);
 
-                counter.textContent = `${allJobs.length} Jobs gefunden`;
-                renderJobs(allJobs);
+                counter.innerText = `${jobs.length} Jobs erfolgreich geladen.`;
+                tbody.innerHTML = "";
+
+                if (jobs.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #6b7280; padding: 40px;">Keine Jobs in der Datei gefunden.</td></tr>`;
+                    return;
+                }
+
+                jobs.forEach(job => {
+                    const tr = document.createElement("tr");
+                    const cleanTitle = String(job.title).replace(/<\/?[^>]+(>|$)/g, "");
+                    const cleanCompany = job.company ? String(job.company).replace(/<\/?[^>]+(>|$)/g, "") : "Nicht angegeben";
+
+                    tr.innerHTML = `
+                        <td style="font-weight: 600;">${cleanTitle}</td>
+                        <td style="color: #4b5563;">🏢 ${cleanCompany}</td>
+                        <td style="text-align: right;"><a href="${job.link}" target="_blank" class="btn">Öffnen ↗</a></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
             } catch (error) {
-                console.error("Fehler beim Laden:", error);
-                grid.innerHTML = `<div class="col-span-full bg-red-50 text-red-700 px-4 py-3 rounded-lg text-center font-medium">Fehler beim Laden der Jobdaten. Bitte überprüfen Sie die Verbindung.</div>`;
-                counter.textContent = "0 Jobs";
+                console.error(error);
+                tbody.innerHTML = `<tr><td colspan="3"><div class="error">Fehler beim direkten Laden: ${error.message}. Versuche es alternativ über ein privates Browserfenster.</div></td></tr>`;
             }
         }
 
-        function renderJobs(jobsToRender) {
-            const grid = document.getElementById("jobGrid");
-            grid.innerHTML = "";
-
-            if (jobsToRender.length === 0) {
-                grid.innerHTML = `<div class="col-span-full text-center text-gray-500 py-12">Keine passenden Jobs gefunden.</div>`;
-                return;
-            }
-
-            jobsToRender.forEach(job => {
-                const card = document.createElement("div");
-                card.className = "bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md flex flex-col justify-between";
-                
-                const titleText = job.title || "Kein Titel";
-                const companyText = job.company || "Unbekanntes Unternehmen";
-
-                card.innerHTML = `
-                    <div>
-                        <h3 class="font-bold text-gray-900 text-lg leading-tight">${titleText}</h3>
-                        <p class="text-sm font-medium text-gray-600 mt-2">🏢 ${companyText}</p>
-                    </div>
-                    <div class="mt-6 pt-4 border-t border-gray-100">
-                        <a href="${job.link}" target="_blank" class="w-full block text-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg text-sm shadow-sm">Job ansehen ↗</a>
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
-        }
-
-        document.getElementById("searchInput").addEventListener("input", (e) => {
-            const searchTerm = e.target.value.toLowerCase();
-            const filtered = allJobs.filter(job => {
-                const titleMatch = job.title?.toLowerCase().includes(searchTerm);
-                const companyMatch = job.company?.toLowerCase().includes(searchTerm);
-                return titleMatch || companyMatch;
-            });
-            renderJobs(filtered);
-            document.getElementById("jobCounter").textContent = `${filtered.length} von ${allJobs.length} Jobs angezeigt`;
-        });
-
-        fetchJobs();
+        loadJobs();
     </script>
 </body>
 </html>
