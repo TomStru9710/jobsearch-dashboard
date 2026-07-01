@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mein JobSearch Dashboard</title>
+    <!-- Das originale Design von gestern Nachmittag -->
     <script src="https://tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen">
@@ -34,7 +35,7 @@
     </main>
 
     <script>
-        const RAW_JSON_URL = "/api/jobs";
+        const RAW_JSON_URL = "https://vercel.app";
         let allJobs = [];
 
         async function fetchJobs() {
@@ -45,27 +46,29 @@
                 const response = await fetch(RAW_JSON_URL);
                 const rawData = await response.json();
                 
-                // ABSTURZSICHERE VERARBEITUNG: Versteht sowohl das alte als auch das neue Make-Format
-                allJobs = [];
-                if (Array.isArray(rawData)) {
-                    rawData.forEach(item => {
-                        // Prüft, ob der Job direkt im Objekt liegt oder in "data" verschachtelt ist
-                        const job = item.data || item;
-                        if (job && job.title) {
-                            allJobs.push(job);
+                // DAS SCHUTZSCHILD: Entschlüsselt die Daten, falls Make sie als Text geschickt hat
+                allJobs = rawData.map(item => {
+                    let job = item.data || item;
+                    if (typeof job === 'string') {
+                        try {
+                            job = JSON.parse(job);
+                        } catch (e) {
+                            return null;
                         }
-                    });
-                }
+                    }
+                    return job;
+                }).filter(job => job && job.title);
 
                 counter.textContent = `${allJobs.length} Jobs gefunden`;
                 renderJobs(allJobs);
             } catch (error) {
-                console.error("Fehler beim Verarbeiten:", error);
+                console.error("Fehler beim Laden:", error);
                 grid.innerHTML = `<div class="col-span-full bg-red-50 text-red-700 px-4 py-3 rounded-lg text-center font-medium">Fehler beim Laden der Jobdaten. Bitte überprüfen Sie die Verbindung.</div>`;
                 counter.textContent = "0 Jobs";
             }
         }
 
+        // Originale Karten-Generierung von gestern Nachmittag
         function renderJobs(jobsToRender) {
             const grid = document.getElementById("jobGrid");
             grid.innerHTML = "";
